@@ -53,11 +53,7 @@ public class OrderPlacedEventListener {
 
     try {
       for (Object lineObj : lines) {
-        if (!(lineObj instanceof Map<?, ?> lineMapRaw)) {
-          throw new IllegalArgumentException("line payload must be an object");
-        }
-        @SuppressWarnings("unchecked")
-        Map<String, Object> lineMap = (Map<String, Object>) lineMapRaw;
+        Map<String, Object> lineMap = asMap(lineObj, "line payload must be an object");
         UUID productId = UUID.fromString(requiredString(lineMap, "productId"));
         int qty = requiredInt(lineMap, "qty");
         stockService.reserve(new ProductId(productId), qty);
@@ -86,6 +82,63 @@ public class OrderPlacedEventListener {
         new InventoryReservedPayload(orderId)
     ));
     markProcessed(eventId, eventType);
+  }
+
+  @RabbitListener(queues = "${saga.events.order-failed-queue:inventory.order.failed}")
+  public void onOrderFailed(Map<String, Object> event) {
+    String eventId = requiredString(event, "eventId");
+    if (processedEventRepo.existsById(eventId)) {
+      return;
+    }
+
+    String eventType = requiredString(event, "eventType");
+    if (!OrderEventTypes.ORDER_FAILED.equals(eventType)) {
+      return;
+    }
+
+    Map<String, Object> payload = requiredMap(event, "payload");
+    List<?> lines = requiredList(payload, "lines");
+    for (Object lineObj : lines) {
+      Map<String, Object> lineMap = asMap(lineObj, "line payload must be an object");
+      UUID productId = UUID.fromString(requiredString(lineMap, "productId"));
+      int qty = requiredInt(lineMap, "qty");
+      stockService.release(new ProductId(productId), qty);
+    }
+
+    markProcessed(eventId, eventType);
+  }
+
+  @RabbitListener(queues = "${saga.events.order-confirmed-queue:inventory.order.confirmed}")
+  public void onOrderConfirmed(Map<String, Object> event) {
+    String eventId = requiredString(event, "eventId");
+    if (processedEventRepo.existsById(eventId)) {
+      return;
+    }
+
+    String eventType = requiredString(event, "eventType");
+    if (!OrderEventTypes.ORDER_CONFIRMED.equals(eventType)) {
+      return;
+    }
+
+    Map<String, Object> payload = requiredMap(event, "payload");
+    List<?> lines = requiredList(payload, "lines");
+    for (Object lineObj : lines) {
+      Map<String, Object> lineMap = asMap(lineObj, "line payload must be an object");
+      UUID productId = UUID.fromString(requiredString(lineMap, "productId"));
+      int qty = requiredInt(lineMap, "qty");
+      stockService.commitReservation(new ProductId(productId), qty);
+    }
+
+    markProcessed(eventId, eventType);
+  }
+
+  private static Map<String, Object> asMap(Object value, String message) {
+    if (value instanceof Map<?, ?> mapRaw) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> map = (Map<String, Object>) mapRaw;
+      return map;
+    }
+    throw new IllegalArgumentException(message);
   }
 
   private static String requiredString(Map<String, Object> source, String key) {

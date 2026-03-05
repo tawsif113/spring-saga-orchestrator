@@ -18,3 +18,5 @@ saga:
   events:
     exchange: saga.events
     order-placed-queue: inventory.order.placed
+    order-failed-queue: inventory.order.failed
+    order-confirmed-queue: inventory.order.confirmed

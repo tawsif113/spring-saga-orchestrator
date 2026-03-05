@@ -52,6 +52,16 @@ public class StockItem { // Aggregate Root
     validateState();
   }
 
+
+  public void commitReservation(int qty) {
+    ensurePositive(qty, "qty must be > 0");
+    if (reservedQty < qty) {
+      throw new IllegalStateException("Cannot commit more than reserved stock");
+    }
+    reservedQty -= qty;
+    validateState();
+  }
+
   public void release(int qty) {
     ensurePositive(qty, "qty must be > 0");
     if (reservedQty < qty) {
