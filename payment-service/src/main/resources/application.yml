@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: payment-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+  mongodb:
+    uri: mongodb://localhost:27017/paymentdb
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+saga:
+  events:
+    exchange: saga.events
+    order-inventory-reserved-queue: payment.order.inventory-reserved
+  payment:
+    auto-approve-limit: 10000.00

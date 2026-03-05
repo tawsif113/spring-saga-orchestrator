@@ -1,0 +1,2 @@
+rootProject.name = 'saga-poc'
+include 'common', 'order-service', 'inventory-service', 'payment-service'

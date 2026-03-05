@@ -1,0 +1,30 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+  mongodb:
+    uri: mongodb://localhost:27017/orderdb
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+saga:
+  events:
+    exchange: saga.events
+    audit-queue: saga.events.audit
+    inventory-reserved-queue: order.inventory.reserved
+    inventory-rejected-queue: order.inventory.rejected
+    payment-authorized-queue: order.payment.authorized
+    payment-rejected-queue: order.payment.rejected
+    publisher-interval-ms: 1000
+#mongodb+srv://user_arima:wzRyL6anNuacEnK2@cluster0:
+#  bbyts8b:
+#    mongodb:
+#      net/?appName=Cluster0:

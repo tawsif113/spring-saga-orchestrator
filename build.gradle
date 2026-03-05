@@ -1,0 +1,31 @@
+plugins {
+  id 'base'
+}
+
+allprojects {
+  group = 'com.example.saga'
+  version = '0.1.0'
+  repositories {
+    mavenCentral()
+  }
+}
+
+// Centralize common Java config
+subprojects {
+  apply plugin: 'java'
+
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(25)
+    }
+  }
+
+  tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+  }
+
+  tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+  }
+}
