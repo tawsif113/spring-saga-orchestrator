@@ -3,7 +3,7 @@ package com.example.saga.common.events;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-
+/// La
 public record DomainEvent(
     UUID eventId,
     String eventType,
