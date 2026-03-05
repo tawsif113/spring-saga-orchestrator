@@ -43,6 +43,13 @@ public class StockCommandService {
     return stockItem;
   }
 
+  public StockItem commitReservation(ProductId productId, int qty) {
+    StockItem stockItem = get(productId);
+    stockItem.commitReservation(qty);
+    repo.save(stockItem);
+    return stockItem;
+  }
+
   public StockItem release(ProductId productId, int qty) {
     StockItem stockItem = get(productId);
     stockItem.release(qty);

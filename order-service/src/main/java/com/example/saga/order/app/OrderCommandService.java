@@ -104,7 +104,12 @@ public class OrderCommandService {
     appendEvent(
         orderId,
         OrderEventTypes.ORDER_CONFIRMED,
-        new OrderConfirmedPayload(order.id().value())
+        new OrderConfirmedPayload(
+            order.id().value(),
+            order.lineSnapshots().stream()
+                .map(l -> new OrderConfirmedPayload.OrderLinePayload(l.productId().value(), l.qty()))
+                .toList()
+        )
     );
     return order;
   }
@@ -122,7 +127,13 @@ public class OrderCommandService {
       appendEvent(
           orderId,
           OrderEventTypes.ORDER_FAILED,
-          new OrderFailedPayload(order.id().value(), reason)
+          new OrderFailedPayload(
+              order.id().value(),
+              reason,
+              order.lineSnapshots().stream()
+                  .map(l -> new OrderFailedPayload.OrderLinePayload(l.productId().value(), l.qty()))
+                  .toList()
+          )
       );
     }
     return order;
@@ -161,7 +172,8 @@ public class OrderCommandService {
     if (order.status() != OrderStatus.INVENTORY_RESERVED) {
       return order;
     }
-    return markPaymentAuthorized(orderId);
+    markPaymentAuthorized(orderId);
+    return confirm(orderId);
   }
 
   public Order handlePaymentRejectedEvent(OrderId orderId, String reason) {

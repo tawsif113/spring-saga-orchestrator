@@ -28,6 +28,27 @@ public class InventoryMessagingConfig {
     return BindingBuilder.bind(orderPlacedQueue).to(sagaEventsExchange).with("order.placed");
   }
 
+
+  @Bean
+  Queue orderFailedQueue(@Value("${saga.events.order-failed-queue:inventory.order.failed}") String queueName) {
+    return new Queue(queueName, true);
+  }
+
+  @Bean
+  Binding orderFailedBinding(Queue orderFailedQueue, TopicExchange sagaEventsExchange) {
+    return BindingBuilder.bind(orderFailedQueue).to(sagaEventsExchange).with("order.failed");
+  }
+
+  @Bean
+  Queue orderConfirmedQueue(@Value("${saga.events.order-confirmed-queue:inventory.order.confirmed}") String queueName) {
+    return new Queue(queueName, true);
+  }
+
+  @Bean
+  Binding orderConfirmedBinding(Queue orderConfirmedQueue, TopicExchange sagaEventsExchange) {
+    return BindingBuilder.bind(orderConfirmedQueue).to(sagaEventsExchange).with("order.confirmed");
+  }
+
   @Bean
   MessageConverter jacksonMessageConverter() {
     return new JacksonJsonMessageConverter();
