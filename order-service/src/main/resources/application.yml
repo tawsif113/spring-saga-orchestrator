@@ -26,7 +26,3 @@ saga:
     payment-authorized-queue: order.payment.authorized
     payment-rejected-queue: order.payment.rejected
     publisher-interval-ms: 1000
-#mongodb+srv://user_arima:wzRyL6anNuacEnK2@cluster0:
-#  bbyts8b:
-#    mongodb:
-#      net/?appName=Cluster0:
