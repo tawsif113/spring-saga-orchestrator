@@ -81,15 +81,29 @@ This project demonstrates how to coordinate a distributed order workflow across 
 
 ## Quick start
 
-### 1) Start infrastructure
+### 1) Start infrastructure (Mongo sharded cluster + RabbitMQ)
 
 ```bash
 docker compose up -d
+./scripts/mongo-init-shards.sh
 ```
 
-This starts:
-- RabbitMQ on `5672` and management UI on `15672` (`guest` / `guest`)
-- MongoDB on `27017`
+Enable sharding for app collections:
+
+```bash
+docker exec -it mongos mongosh --port 27017 --eval 'sh.enableSharding("orderdb"); sh.enableSharding("paymentdb"); sh.shardCollection("orderdb.orders",{_id:"hashed"}); sh.shardCollection("orderdb.order_events",{aggregateId:"hashed"}); sh.shardCollection("paymentdb.payments",{orderId:"hashed"});'
+```
+
+RabbitMQ is included in the compose stack and exposed on:
+- AMQP: `localhost:5672`
+- Management UI: `http://localhost:15672`
+
+The services default to `admin/admin`, configurable via env vars:
+
+```bash
+export RABBITMQ_USERNAME=admin
+export RABBITMQ_PASSWORD=admin
+```
 
 ### 2) Run services (3 terminals)
 
@@ -191,6 +205,7 @@ curl http://localhost:8083/api/payments/by-order/<ORDER_ID>
 ### Messaging
 
 - Exchange: `saga.events`
+- RabbitMQ default credentials: `admin` / `admin` (override with `RABBITMQ_USERNAME` and `RABBITMQ_PASSWORD`)
 - Key queues (configured in `application.yml`):
   - inventory consumes `inventory.order.placed`, `inventory.order.failed`, `inventory.order.confirmed`
   - payment consumes `payment.order.inventory-reserved`
@@ -198,9 +213,10 @@ curl http://localhost:8083/api/payments/by-order/<ORDER_ID>
 
 ### Datastores
 
-- `order-service` → `mongodb://localhost:27017/orderdb`
-- `inventory-service` → `mongodb://localhost:27017/inventorydb`
-- `payment-service` → `mongodb://localhost:27017/paymentdb`
+- Services connect via `mongos` at `mongodb://localhost:27017`
+- `order-service` database: `orderdb`
+- `inventory-service` database: `inventorydb`
+- `payment-service` database: `paymentdb`
 
 ---
 
@@ -217,9 +233,12 @@ curl http://localhost:8083/api/payments/by-order/<ORDER_ID>
 ## Development tips
 
 - To reset local state quickly:
-  - stop services
-  - clear MongoDB collections/databases
-  - restart services
+  - stop local Spring Boot services
+  - `docker compose down -v --remove-orphans`
+  - `docker compose up -d`
+  - `./scripts/mongo-init-shards.sh`
+  - `docker exec -it mongos mongosh --port 27017 --eval 'sh.enableSharding("orderdb"); sh.enableSharding("paymentdb"); sh.shardCollection("orderdb.orders",{_id:"hashed"}); sh.shardCollection("orderdb.order_events",{aggregateId:"hashed"}); sh.shardCollection("paymentdb.payments",{orderId:"hashed"});'`
+  - `docker compose exec rabbitmq rabbitmqctl stop_app && docker compose exec rabbitmq rabbitmqctl reset && docker compose exec rabbitmq rabbitmqctl start_app`
 - Use RabbitMQ UI (`http://localhost:15672`) to inspect queue depth and message flow.
 - Tail logs of all three services side-by-side to observe saga transitions in real time.
 
