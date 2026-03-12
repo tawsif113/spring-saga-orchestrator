@@ -37,7 +37,10 @@ public final class Order {
   }
 
   public Money total() {
-    Money sum = new Money(BigDecimal.ZERO, "BDT");
+    if (lines.isEmpty()) {
+      return new Money(BigDecimal.ZERO, "BDT");
+    }
+    Money sum = new Money(BigDecimal.ZERO, lines.getFirst().unitPrice().currency());
     for (var l : lines) sum = sum.add(l.unitPrice().multiply(l.qty()));
     return sum;
   }
@@ -51,7 +54,11 @@ public final class Order {
     // invariant: same product appears once (merge qty)
     var existing = lines.stream().filter(x -> x.productId().equals(productId)).findFirst();
     if (existing.isPresent()) {
-      existing.get().increaseQty(qty);
+      OrderLine line = existing.get();
+      if (!line.unitPrice().equals(unitPrice)) {
+        throw new IllegalArgumentException("Unit price mismatch for existing product line");
+      }
+      line.increaseQty(qty);
     } else {
       lines.add(new OrderLine(productId, qty, unitPrice));
     }

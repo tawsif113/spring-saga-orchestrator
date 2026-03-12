@@ -34,8 +34,7 @@ public class OrderEventOutboxPublisher {
     List<OrderEventDocument> pending = eventRepo.findTop100ByPublishedAtIsNullOrderByOccurredAtAscVersionAsc();
     for (OrderEventDocument event : pending) {
       rabbitTemplate.convertAndSend(exchangeName, event.eventType, toMessage(event));
-      event.publishedAt = Instant.now();
-      eventRepo.save(event);
+      eventRepo.markPublished(event.id, event.aggregateId, Instant.now());
     }
   }
 

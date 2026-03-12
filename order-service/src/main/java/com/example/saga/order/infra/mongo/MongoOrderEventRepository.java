@@ -22,7 +22,8 @@ public class MongoOrderEventRepository implements OrderEventRepository {
 
   @Override
   public void append(DomainEvent event) {
-    repo.save(OrderEventMapper.toDoc(event, objectMapper));
+    // Use insert (not save/upsert) to avoid shard-key targeting errors on sharded order_events.
+    repo.insert(OrderEventMapper.toDoc(event, objectMapper));
   }
 
   @Override

@@ -10,14 +10,36 @@ This repo is a **multi-module Gradle (Groovy DSL)** scaffold for a small **Saga*
 ## Prereqs
 - Java 25
 - Gradle 8.14+ or 9.x (Spring Boot 4 compatible)
-- Docker (for RabbitMQ)
+- Docker (for Mongo sharding and RabbitMQ)
 
-## Start infrastructure (RabbitMQ)
+## Start infrastructure
 ```bash
 docker compose up -d
 ```
 
-RabbitMQ UI: http://localhost:15672  (guest/guest)
+This compose file defines the MongoDB shard/config/mongos topology.
+If RabbitMQ is in a separate compose stack, start that too.
+
+## Mongo shard runbook
+Initialize replica sets + add shards to mongos:
+```bash
+./scripts/mongo-init-shards.sh
+```
+
+Verify shard health and distribution metadata:
+```bash
+./scripts/mongo-verify-shards.sh
+```
+
+Shard app collections (example):
+```bash
+docker exec -it mongos mongosh --port 27017 --eval 'sh.enableSharding("orderdb"); sh.enableSharding("paymentdb"); sh.shardCollection("orderdb.orders",{_id:"hashed"}); sh.shardCollection("orderdb.order_events",{aggregateId:"hashed"}); sh.shardCollection("paymentdb.payments",{orderId:"hashed"});'
+```
+
+Generate load through APIs:
+```bash
+./scripts/load-orders.sh --orders 500 --concurrency 20
+```
 
 ## Run services (3 terminals)
 If you don’t have the Gradle wrapper yet, generate it once:

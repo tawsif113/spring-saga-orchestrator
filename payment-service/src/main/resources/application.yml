@@ -7,6 +7,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:admin}
   mongodb:
     uri: mongodb://localhost:27017/paymentdb
 

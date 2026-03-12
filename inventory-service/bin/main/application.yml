@@ -7,8 +7,10 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:admin}
   mongodb:
-      uri: mongodb://localhost:27017/inventorydb
+    uri: mongodb://localhost:27017/inventorydb
 management:
   endpoints:
     web:
@@ -18,3 +20,5 @@ saga:
   events:
     exchange: saga.events
     order-placed-queue: inventory.order.placed
+    order-failed-queue: inventory.order.failed
+    order-confirmed-queue: inventory.order.confirmed
